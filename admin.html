@@ -3,66 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GENTI TERM | Ultra Admin Multi-Upload</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>GENTI TERM | Admin Suite 2026</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
     <style>
-        :root { --primary: #007aff; --bg: #030303; --card: #161617; --border: rgba(255,255,255,0.08); }
+        :root {
+            --primary: #007aff;
+            --accent: #ff3b30;
+            --bg: #000000;
+            --card: #121213;
+            --border: rgba(255,255,255,0.08);
+            --glow: rgba(0, 122, 255, 0.2);
+        }
+
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Plus Jakarta Sans', sans-serif; }
-        body { background: var(--bg); color: white; padding: 20px; }
-        .wrapper { max-width: 1000px; margin: 0 auto; display: none; }
-        #login-screen { position: fixed; inset: 0; background: #000; z-index: 999; display: flex; align-items: center; justify-content: center; }
-        .glass { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; margin-bottom: 20px; }
-        input, textarea { width: 100%; padding: 15px; background: #000; border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
-        .punimi-item { display: flex; align-items: center; gap: 15px; padding: 15px; border-bottom: 1px solid var(--border); }
-        .punimi-item img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
-        .multi-preview { display: flex; gap: 5px; overflow-x: auto; margin-bottom: 15px; }
-        .multi-preview img { height: 80px; border-radius: 8px; }
+        body { background: var(--bg); color: white; overflow-x: hidden; }
+
+        /* Login Screen */
+        #login-screen {
+            position: fixed; inset: 0; background: radial-gradient(circle at center, #0a0a0f 0%, #000 100%);
+            z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(20px);
+        }
+        .login-card {
+            background: var(--card); border: 1px solid var(--border); padding: 40px;
+            border-radius: 32px; width: 100%; max-width: 380px; text-align: center;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            border-top: 2px solid var(--primary);
+        }
+        .login-logo { font-size: 2.2rem; font-weight: 800; margin-bottom: 5px; letter-spacing: -1px; }
+
+        /* Dashboard Wrapper */
+        .wrapper { max-width: 1100px; margin: 0 auto; padding: 40px 20px; display: none; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+
+        .glass {
+            background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+            padding: 30px; position: relative;
+        }
+
+        h3 { font-size: 1.2rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--primary); }
+
+        input, textarea, select {
+            width: 100%; padding: 16px; background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border); border-radius: 14px;
+            color: white; margin-bottom: 15px; outline: none; transition: 0.3s;
+            font-size: 1rem;
+        }
+        input:focus { border-color: var(--primary); background: rgba(255,255,255,0.06); box-shadow: 0 0 15px var(--glow); }
+
+        .btn {
+            width: 100%; padding: 16px; background: var(--primary); color: white;
+            border: none; border-radius: 14px; font-weight: 700; cursor: pointer;
+            transition: 0.4s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px var(--glow); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Live List Styling */
+        .punimi-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px;
+            background: rgba(255,255,255,0.02); border-radius: 18px; margin-bottom: 12px;
+            border: 1px solid transparent; transition: 0.3s;
+        }
+        .punimi-item:hover { background: rgba(255,255,255,0.05); border-color: var(--border); }
+        .punimi-item img { width: 55px; height: 55px; border-radius: 10px; object-fit: cover; }
+        
+        .item-info { flex-grow: 1; }
+        .item-info b { display: block; font-size: 0.95rem; }
+        .item-info span { font-size: 0.8rem; color: #86868b; }
+
+        .btn-fshi {
+            background: rgba(255, 59, 48, 0.1); color: var(--accent);
+            border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
+        }
+        .btn-fshi:hover { background: var(--accent); color: white; }
+
+        @media (max-width: 850px) { .grid { grid-template-columns: 1fr !important; } }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
-        <div class="glass" style="width: 350px; text-align: center;">
-            <h2>Admin Access</h2><br>
-            <input type="text" id="user-in" placeholder="Username">
+        <div class="login-card">
+            <div class="login-logo">GENTI<span style="color:var(--accent)">TERM</span></div>
+            <p style="color:#86868b; font-size: 0.8rem; margin-bottom: 30px; font-weight: 600; letter-spacing: 1px;">SISTEMI I MENAXHIMIT</p>
+            
+            <input type="text" id="user-in" placeholder="Username (GENTI TERM)">
             <input type="password" id="pass-in" placeholder="Password">
-            <button class="btn" onclick="login()">HYR</button>
+            <button class="btn" onclick="login()">HYR NË PANEL</button>
         </div>
     </div>
 
     <div class="wrapper" id="panel">
-        <h1 style="margin-bottom: 30px;">GENTI<span style="color:#ff3b30">TERM</span> Dashboard</h1>
+        <div class="header">
+            <div>
+                <h1 style="font-weight: 800; font-size: 1.8rem;">GENTI<span style="color:var(--accent)">TERM</span></h1>
+                <p style="color: var(--primary); font-size: 0.7rem; font-weight: 700; letter-spacing: 2px;">PANELI ADMIN 2026</p>
+            </div>
+            <button onclick="location.reload()" style="background:none; border:1px solid var(--border); color:white; padding:10px; border-radius:12px; cursor:pointer;"><i class="fas fa-sign-out-alt"></i> Dil</button>
+        </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="grid" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px;">
             <div class="glass">
-                <h3>Shto Album të Ri</h3><br>
-                <input type="text" id="titulli" placeholder="Titulli (Psh: Montimi Bergen 16kw)">
-                <textarea id="pershkrimi" placeholder="Përshkrimi..."></textarea>
-                <p style="font-size: 0.8rem; color: #86868b; margin-bottom: 5px;">Zgjidh 1 ose më shumë foto:</p>
-                <input type="file" id="foto-input" multiple accept="image/*">
+                <h3><i class="fas fa-plus-circle"></i> Shto Projekt të Ri</h3>
+                <input type="text" id="titulli" placeholder="Titulli i projektit">
+                <textarea id="pershkrimi" placeholder="Detajet e punës (Psh: Montimi i kalldajes...)" rows="5"></textarea>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 0.75rem; color: #86868b; margin-bottom: 5px; display: block;">Data e përfundimit të punës:</label>
+                    <input type="date" id="data-punimit">
+                </div>
+
+                <label style="font-size: 0.75rem; color: #86868b; margin-bottom: 5px; display: block;">Ngarko një ose më shumë foto:</label>
+                <input type="file" id="foto-input" multiple accept="image/*" style="padding: 10px; background: none;">
+                
                 <button class="btn" id="up-btn" onclick="uploadAlbum()">PUBLIKO ALBUMIN</button>
-                <p id="st" style="margin-top: 10px; font-size: 0.8rem; text-align: center; color: var(--primary);"></p>
+                <p id="st" style="margin-top: 15px; font-size: 0.85rem; text-align: center; color: var(--primary); font-weight: 600;"></p>
             </div>
 
             <div class="glass">
-                <h3>Punimet Aktuale</h3><br>
-                <div id="live-list"></div>
+                <h3><i class="fas fa-layer-group"></i> Arkiva e Punimeve</h3>
+                <div id="live-list" style="max-height: 550px; overflow-y: auto; padding-right: 5px;">
+                    </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Security Login
         function login() {
-            if(document.getElementById('user-in').value === "admin" && document.getElementById('pass-in').value === "genti2026") {
+            const u = document.getElementById('user-in').value;
+            const p = document.getElementById('pass-in').value;
+            // TASH USERNAME ESHTE "GENTI TERM"
+            if(u === "GENTI TERM" && p === "genti2026") {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('panel').style.display = 'block';
-            } else { alert("Gabim!"); }
+            } else {
+                alert("Username ose Password i gabuar!");
+            }
         }
 
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBh_7BwfNbKbscPSW1ZN9Y_UvAntsj19Wg",
             authDomain: "herolind-6ca5f.firebaseapp.com",
@@ -75,58 +161,78 @@
         const db = firebase.firestore();
         const IMGBB_KEY = "eb62a6907856c805db10887e57fa34ea";
 
+        // Multi Upload Logic
         async function uploadAlbum() {
             const files = document.getElementById('foto-input').files;
             const tit = document.getElementById('titulli').value;
             const per = document.getElementById('pershkrimi').value;
+            const dataP = document.getElementById('data-punimit').value;
             const btn = document.getElementById('up-btn');
             const st = document.getElementById('st');
 
-            if(files.length === 0 || !tit) return alert("Shto titullin dhe fotot!");
+            if(files.length === 0 || !tit) return alert("Ju lutem plotësoni Titullin dhe zgjidhni fotot!");
 
             btn.disabled = true;
             let uploadedUrls = [];
 
-            for(let i=0; i < files.length; i++) {
-                st.innerText = `Duke ngarkuar foton ${i+1} nga ${files.length}...`;
-                const formData = new FormData();
-                formData.append("image", files[i]);
-                const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: formData });
-                const data = await res.json();
-                if(data.success) uploadedUrls.push(data.data.url);
+            try {
+                for(let i=0; i < files.length; i++) {
+                    st.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Duke ngarkuar ${i+1}/${files.length}...`;
+                    const formData = new FormData();
+                    formData.append("image", files[i]);
+                    
+                    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: formData });
+                    const data = await res.json();
+                    if(data.success) uploadedUrls.push(data.data.url);
+                }
+
+                st.innerHTML = "<i class='fas fa-check-circle'></i> Duke ruajtur në databazë...";
+                
+                await db.collection("projekte").add({
+                    titulli: tit,
+                    pershkrimi: per,
+                    data: dataP || new Date().toISOString().split('T')[0],
+                    images: uploadedUrls,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                st.innerHTML = "✅ SUKSES! PUNIMI U PUBLIKUA.";
+                setTimeout(() => location.reload(), 2000);
+
+            } catch(e) {
+                alert("Ndodhi një gabim!");
+                btn.disabled = false;
+                st.innerHTML = "";
             }
-
-            st.innerText = "Duke ruajtur albumin...";
-            await db.collection("projekte").add({
-                titulli: tit,
-                pershkrimi: per,
-                images: uploadedUrls, // TASH RUHEN SI LISTE (ARRAY)
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            alert("Albumi u publikua!");
-            location.reload();
         }
 
+        // Realtime Listener for the list
         db.collection("projekte").orderBy("timestamp", "desc").onSnapshot(snap => {
             const list = document.getElementById('live-list');
             list.innerHTML = '';
             snap.forEach(doc => {
                 const d = doc.data();
-                const imgCount = d.images ? d.images.length : 1;
+                const count = d.images ? d.images.length : 1;
+                const dateRaw = d.data || '';
+                const displayDate = dateRaw.split('-').reverse().join('.');
+                
                 list.innerHTML += `
                     <div class="punimi-item">
-                        <img src="${d.images ? d.images[0] : d.imageUrl}">
-                        <div style="flex-grow:1">
-                            <b>${d.titulli}</b><br>
-                            <small>${imgCount} foto</small>
+                        <img src="${d.images ? d.images[0] : ''}">
+                        <div class="item-info">
+                            <b>${d.titulli}</b>
+                            <span><i class="far fa-calendar-alt"></i> ${displayDate} • ${count} foto</span>
                         </div>
-                        <button onclick="fshi('${doc.id}')" style="background:none; border:none; color:#ff3b30; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                        <button class="btn-fshi" onclick="fshi('${doc.id}')"><i class="fas fa-trash-alt"></i></button>
                     </div>`;
             });
         });
 
-        async function fshi(id) { if(confirm("Fshi?")) await db.collection("projekte").doc(id).delete(); }
+        async function fshi(id) {
+            if(confirm("A jeni i sigurt që dëshironi ta fshini këtë projekt përgjithmonë?")) {
+                await db.collection("projekte").doc(id).delete();
+            }
+        }
     </script>
 </body>
 </html>
